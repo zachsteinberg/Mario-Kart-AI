@@ -8,7 +8,7 @@ from keras.wrappers.scikit_learn import KerasClassifier
 from keras.optimizers import Adam
 
 # Create environment
-env = retro.make(game='SuperMarioKart-Snes')
+env = retro.make(game='SuperMarioKart-Snes', use_restricted_actions=retro.Actions.DISCRETE)
 num_actions = env.action_space.n
 state_size = env.observation_space.shape
 
@@ -39,7 +39,7 @@ agent = DQNAgent(
     model=model, 
     nb_actions=num_actions, 
     memory=memory, 
-    nb_steps_warmup=10,
+    nb_steps_warmup=1000,
     target_model_update=1e-2, 
     policy=policy
 )
@@ -68,7 +68,7 @@ callbacks=callbacks)
 agent.fit(
     env,
     nb_steps=1000,
-    visualize=True,
+    visualize=False,
     verbose=1
 )
 
