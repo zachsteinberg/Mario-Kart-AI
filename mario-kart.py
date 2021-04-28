@@ -1,14 +1,17 @@
 import retro
+import pandas
 from rl.agents.dqn import DQNAgent
 from rl.memory import SequentialMemory
-from rl.policy import BoltzmannQPolicy
+from rl.policy import LinearAnnealedPolicy, EpsGreedyQPolicy 
 from keras.models import Model, Sequential
 from keras.layers import Dense, Flatten, Input
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.optimizers import Adam
+from rl.callbacks import ModelIntervalCheckpoint, FileLogger
 
 # Create environment
 env = retro.make(game='SuperMarioKart-Snes', use_restricted_actions=retro.Actions.DISCRETE)
+
 num_actions = env.action_space.n
 state_size = env.observation_space.shape
 
@@ -32,7 +35,7 @@ model = build_model(state_size, num_actions)
 memory = SequentialMemory(limit=50000, window_length=1)
 
 # Define a policy
-policy = BoltzmannQPolicy()
+policy = LinearAnnealedPolicy(EpsGreedyQPolicy(), attr='eps', value_max=1., value_min=.1, value_test=.05, nb_steps=10000)
 
 # Create the agent
 agent = DQNAgent(
@@ -46,31 +49,32 @@ agent = DQNAgent(
 
 agent.compile(Adam(lr=1e-3), metrics=['mae'])
 
-'''
 # Set up callbacks
 def build_callbacks(env_name):
     checkpoint_weights_filename = 'dqn_' + env_name + '_weights_{step}.h5f'
     log_filename = 'dqn_{}_log.json'.format(env_name)
-    callbacks = [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=5000)]
-    callbacks += [FileLogger(log_filename, interval=100)]
+    callbacks = [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=10000)]
+    callbacks += [FileLogger(log_filename, interval=10000)]
     return callbacks
 
 # Fit model
-callbacks = build_callbacks(ENV_NAME)
+callbacks = build_callbacks('mario_kart')
 
-dqn.fit(env, nb_steps=50000,
-visualize=False,
-verbose=2,
-callbacks=callbacks)
-'''
+# Save weights
+agent.save_weights('weights.h5f', overwrite=True)
 
-# Fit model
 agent.fit(
-    env,
-    nb_steps=1000,
+    env, 
+    nb_steps=5000000000,
     visualize=False,
-    verbose=1
+    verbose=1,
+    callbacks=callbacks,
+    log_interval=10000,
+    nb_max_episode_steps= 5000
 )
+
+# Save weights
+agent.save_weights('weights.h5f', overwrite=True)
 
 # Test model
 agent.test(env, nb_episodes=5, visualize=True)
