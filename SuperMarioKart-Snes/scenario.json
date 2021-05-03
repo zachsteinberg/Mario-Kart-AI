@@ -1,0 +1,21 @@
+{
+  "done": {
+    "variables": {
+      "Lap": {
+        "op": "equal",
+        "reference": 133
+      }
+    }
+  },
+  "reward": {
+    "script": "lua:reward"
+  },
+  "scripts": [
+    "script.lua"
+  ],
+  "actions": [
+    [[], ["R"]],
+    [[], ["LEFT"], ["RIGHT"]],
+    [["B"]]
+  ]
+}
